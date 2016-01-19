@@ -30,12 +30,12 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
+import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.ParseException;
 
 import org.jf.dexlib2.dexbacked.DexBackedDexFile;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
 import org.jf.dexlib2.dexbacked.DexBackedMethod;
-//import org.jf.dexlib2.dexbacked.DexBackedMethodParameter;
 import org.jf.dexlib2.DexFileFactory;
 
 import org.jf.dexlib2.iface.MethodParameter;
@@ -47,7 +47,6 @@ public class App {
     private static final String gProgramVersion = "1.0";
 
     private static DexBackedDexFile gDexFile = null;
-
 
     private static final String IINTERFACE_CLASS = "android.os.IInterface";
 
@@ -162,7 +161,7 @@ public class App {
         return null;
     }
 
-    private static int processDex() {
+    private static int processDex(String outputDirectory) {
 
         int rtn = 0;
         int i = 0;
@@ -189,8 +188,13 @@ public class App {
                 /* Now grab the Stub.Proxy, to get the protocols */
                 String stubProxyName = className + ".Stub.Proxy";
                 DexBackedClassDef stubProxyDef = getStubProxy(classDefs, stubProxyName);
+                if (stubProxyDef == null) {
+                    System.err.println("[ERROR] Unable to find Stub.Proxy for class: "
+                                                            + stubProxyName + ", Skiping!");
+                    continue;
+                }
 
-                AidlFile aidl = new AidlFile(className);
+                AidlFile aidl = new AidlFile(className, outputDirectory);
 
                 String shortClassName = Utils.getShort(className);
 
@@ -228,16 +232,16 @@ public class App {
                         if (param.getName() != null) {
                             argName = param.getName();
                         } else {
-                            argName = "arg"+Integer.toString(paramOffset);
+                            argName = "arg" + Integer.toString(paramOffset);
                         }
 
-                        paramStringBuilder.append(shortName+" "+argName+", ");
+                        paramStringBuilder.append(shortName + " " + argName + ", ");
                         paramOffset++;
                     }
 
                     String paramString = paramStringBuilder.toString().replaceAll(",\\s$", "");                    
                     /* Let's build the import list */
-                    aidl.addMethod("    "+shortReturnType+" "+methodName+"("+paramString+");");
+                    aidl.addMethod("    " + shortReturnType + " " + methodName + "(" + paramString + ");");
 
 
                 }
@@ -256,15 +260,17 @@ public class App {
     
         String dexFileName = "";
         String dexDbName = "";
+        String outputDirectory = ".";
         int sdkVersion = 23;
 
         CommandLineParser parser = new BasicParser();
         CommandLine cmd = null;
 
-        gOptions.addOption("a", false, "Android API level to use.");
+        gOptions.addOption("a", true, "Android API level to use.");
         gOptions.addOption("d", false, "Show debugging information.");
         gOptions.addOption("h", false, "Show help screen.");
         gOptions.addOption("i", true, "Input DEX/ODEX file.");
+        gOptions.addOption("o", true, "Output directory for AIDL files.");
 
         try {
             cmd = parser.parse(gOptions, args);
@@ -286,21 +292,25 @@ public class App {
                 }
             }
 
+            if (cmd.hasOption("o")) {
+                outputDirectory = cmd.getOptionValue("o");
+            }
+
             if (!cmd.hasOption("i")) {
-                System.err.println("[ERROR] Input, output, and API level parameters are required!");
+                System.err.println("[ERROR] Input (-i) parameter is required!");
                 usage();
                 System.exit(-1);
             }
 
         } catch (ParseException e) {
-            System.err.println("[ERROR] Unable to parse command line properties: "+e);
+            System.err.println("[ERROR] Unable to parse command line properties: " + e);
             System.exit(-1);
         }
 
         dexFileName = cmd.getOptionValue("i");
 
         if (!isFile(dexFileName)) {
-            System.err.println("[ERROR] File '"+dexFileName+"' does not exist!");
+            System.err.println("[ERROR] File '" + dexFileName + "' does not exist!");
             System.exit(-3);
         }
 
@@ -312,14 +322,10 @@ public class App {
             System.exit(-4);
         }
 
-        if (gDebug) { System.out.println("Creating DexDbHelper."); }
-
-
-
         if (gDebug) { System.out.println("About to process DEX..."); }
-        rtn = processDex();
+        rtn = processDex(outputDirectory);
         if (rtn != 0) {
-            System.err.println("[ERROR] Error processing dex!");    
+            System.err.println("[ERROR] Error processing DEX!");
         }
 
         /* Close it down. */

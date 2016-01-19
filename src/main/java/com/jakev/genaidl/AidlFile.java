@@ -14,13 +14,16 @@ public class AidlFile {
     private List<String> methods;
     private String interfaceName = "";
     private String packageName = "";
+    private String outputDirectory = "";
 
-    public AidlFile(String className) {
+    public AidlFile(String className, String outputDir) {
 
         packageName = Utils.getPackage(className);
         interfaceName = Utils.getShort(className);
         imports = new ArrayList<String>();
         methods = new ArrayList<String>();
+        outputDirectory = outputDir;
+
     }
 
     public void addMethod(String methodString) {
@@ -39,7 +42,7 @@ public class AidlFile {
 
     public int writeFile() {
 
-        String fileName = interfaceName+".aidl";
+        String fileName = outputDirectory + "/" + interfaceName+".aidl";
 
         System.out.println("Writing: "+fileName);
 
@@ -48,10 +51,10 @@ public class AidlFile {
         try {
             writer = new PrintWriter(fileName, "UTF-8");
         } catch (UnsupportedEncodingException e) {
-            System.err.println("Unable to open file!");
+            System.err.println("[ERROR] Unable to open file!");
             return -1;
         } catch (FileNotFoundException e) {
-            System.err.println("Unable to open file!");
+            System.err.println("[ERROR] Unable to open file!");
             return -1;
         }
 
