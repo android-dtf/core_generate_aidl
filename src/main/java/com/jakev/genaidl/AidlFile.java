@@ -1,5 +1,6 @@
 package com.jakev.genaidl;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
 import java.io.PrintWriter;
@@ -45,6 +46,9 @@ public class AidlFile {
         String fileName = outputDirectory + "/" + interfaceName+".aidl";
 
         System.out.println("Writing: "+fileName);
+
+        /* Create directories above file */
+        new File(fileName).getParentFile().mkdirs();
 
         PrintWriter writer;
 
