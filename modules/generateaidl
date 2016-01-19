@@ -1,0 +1,85 @@
+#!/usr/bin/env python
+# DTF Core Content
+# Copyright 2013-2015 Jake Valletta (@jake_valletta)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+"""Generate AIDL for given application name"""
+
+import os.path
+
+from dtf.module import Module
+from dtf.packages import launch_binary
+
+import dtf.properties as prop
+import dtf.logging as log
+
+TAG = "generateaidl"
+
+class generateaidl(Module):
+
+    """Module class for generating AIDL files"""
+
+    about = 'Generate AIDL for given application name.'
+    author = 'Jake Valletta (jakev)'
+    health = 'beta'
+    name = 'generateaidl'
+    version = '1.0'
+
+    @classmethod
+    def do_generate(cls, file_path, sdk, out_path):
+
+        """Process a single application"""
+
+        cmd_args = "-i %s -a %s -o %s" % (file_path, sdk, out_path)
+
+        out, err, rtn = launch_binary("GenerateAIDL-1.0.jar",
+                                      cmd_args, launcher="java -jar")
+
+        log.d(TAG, "Generate completed: %d" % rtn)
+        return rtn
+
+    def usage(self):
+
+        """Print usage message"""
+
+        print "GenerateAIDL dtf Module v%s" % self.version
+        print ""
+        print "Usage: %s [app_name]" % self.name
+        print ""
+        return 0
+
+    def execute(self, args):
+
+        """Main module execution"""
+
+        if len(args) == 0:
+            return self.usage()
+        app_name = args.pop(0)
+
+        system_apps_dir = prop.get_prop("Local", "system-apps-dir")
+        sdk = prop.get_prop("Info", "sdk")
+
+        app_apk = "%s/%s/%s.apk" % (prop.TOP, system_apps_dir, app_name)
+        app_odex = "%s/%s/%s.odex" % (prop.TOP, system_apps_dir, app_name)
+        out_dir = "%s/aidl-files/%s" % (prop.TOP, app_name)
+
+        if os.path.isfile(app_apk):
+            log.i(TAG, "Generating AIDL from '%s'..." % app_apk)
+            return self.do_generate(app_apk, sdk, out_dir)
+        elif os.path.isfile(app_odex):
+            log.i(TAG, "Generating AIDL from '%s'..." % app_odex)
+            return self.do_generate(app_odex, sdk, out_dir)
+        else:
+            log.e(TAG, "Unable to find application '%s'!" % app_name)
+            return -1
