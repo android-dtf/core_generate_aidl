@@ -5,3 +5,5 @@ pom.xml.next
 release.properties
 *.apk
 *.odex
+*.dex
+*.aidl
