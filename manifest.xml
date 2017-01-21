@@ -1,0 +1,16 @@
+<Items>
+    <Item type="module"
+          name="generateaidl"
+          majorVersion="1.1.0"
+          health="stable"
+          author="Jake Valletta (jakev)"
+          about="Generate AIDL for given application name."
+          localName="generateaidl" />
+
+    <Item type="binary"
+          name="GenerateAIDL.jar"
+          majorVersion="1.0.0"
+          health="stable"
+          author="Jake Valletta (jakev)"
+          localName="bin/GenerateAIDL.jar" />
+</Items>
